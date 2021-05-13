@@ -1,0 +1,403 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "d2d8473a-61c3-4a2b-a773-48a5450d933e",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Time Range",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 604800000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 300000
+                },
+                {
+                  "durationMs": 900000
+                },
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 259200000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 1209600000
+                },
+                {
+                  "durationMs": 2419200000
+                },
+                {
+                  "durationMs": 2592000000
+                }
+              ],
+              "allowCustom": true
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            }
+          },
+          {
+            "id": "56de297e-7320-40b9-b762-62faa3cd2157",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workspace",
+            "type": 5,
+            "value": "/subscriptions/ab48f397-fc82-4634-aa52-62dd91b3ebaa/resourcegroups/woodgrove-rg/providers/microsoft.operationalinsights/workspaces/woodgrove-loganalyiticsworkspace",
+            "typeSettings": {
+              "additionalResourceOptions": []
+            }
+          },
+          {
+            "id": "5e661278-4068-4a21-82bc-a7201e7c6535",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscription",
+            "type": 6,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "value": [
+              "/subscriptions/ab48f397-fc82-4634-aa52-62dd91b3ebaa"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [],
+              "includeAll": false
+            }
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters - 0"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "# Usage of Primary Refresh Token (PRT) on Windows Devices\r\n\r\n"
+      },
+      "name": "text - 1"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "Using a PRT in Windows is a pre-requisite to successfully roll conditional access policies with device controls (e.g. Compliant device, Hybrid Azure AD joined)\r\n",
+        "style": "info"
+      },
+      "name": "text - 1 - Copy"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "union(SigninLogs\r\n| where AppId == \"38aa3b87-a06d-4817-b275-7a316988d93b\" //Windows Sign-In\r\n//| where ResultType == 0\r\n| summarize Count=count()\r\n| extend MetricName=\"Total Sign-Ins\"),\r\n(SigninLogs\r\n| extend DeviceId = tostring(DeviceDetail.deviceId)\r\n| where AppId == \"38aa3b87-a06d-4817-b275-7a316988d93b\" //Windows Sign-In\r\n//| where ResultType == 0\r\n| where DeviceId != \"\"\r\n| summarize Count=dcount(DeviceId)\r\n| extend MetricName=\"Total Devices\");\r\n",
+        "size": 3,
+        "title": "Total Count of Devices",
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "showBorder": false,
+          "titleContent": {
+            "columnMatch": "MetricName",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Count",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "maximumSignificantDigits": 3,
+                "maximumFractionDigits": 2
+              }
+            }
+          }
+        }
+      },
+      "customWidth": "50",
+      "name": "query - 10"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs\r\n|mv-expand ParsedFields=parse_json(AuthenticationDetails)\r\n    |extend AuthenticationStepDateTime = ParsedFields.authenticationStepDateTime\r\n    |extend AuthenticationMethod = ParsedFields.authenticationMethod\r\n    |extend AuthMethod = tostring(AuthenticationMethod)\r\n    |extend DeviceId = tostring(DeviceDetail.deviceId)\r\n| where AppId == \"38aa3b87-a06d-4817-b275-7a316988d93b\" //Windows Sign-In\r\n//| where ResultType == 50155 //Device authentication failed for this user.\r\n//| project TimeGenerated, Id, CorrelationId, UserPrincipalName\r\n| summarize TotalRequests=count() by AuthMethod\r\n//| sort by TotalRequests desc\r\n",
+        "size": 3,
+        "title": "Authentication Method Used",
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "piechart"
+      },
+      "customWidth": "50",
+      "name": "query - 17"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Succesful PRT Users and devices \r\n"
+      },
+      "name": "text - 1 - Copy - Copy"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "union(SigninLogs\r\n| where AppId == \"38aa3b87-a06d-4817-b275-7a316988d93b\" //Windows Sign-In\r\n| where ResultType == 0\r\n| summarize DistinctCount=dcount(UserPrincipalName)\r\n| extend MetricName=\"Distinct Users\"),\r\n(SigninLogs\r\n| extend DeviceId = tostring(DeviceDetail.deviceId)\r\n| where AppId == \"38aa3b87-a06d-4817-b275-7a316988d93b\" //Windows Sign-In\r\n| where ResultType == 0\r\n| summarize DistinctCount=dcount(DeviceId)\r\n| extend MetricName=\"Distinct Devices\");\r\n",
+        "size": 3,
+        "showAnalytics": true,
+        "title": "Distinct Count of Successful PRT Users and Devices",
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "tiles",
+        "tileSettings": {
+          "showBorder": false,
+          "titleContent": {
+            "columnMatch": "MetricName",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "DistinctCount",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            },
+            "numberFormat": {
+              "unit": 17,
+              "options": {
+                "maximumSignificantDigits": 3,
+                "maximumFractionDigits": 2
+              }
+            }
+          }
+        }
+      },
+      "customWidth": "40",
+      "name": "query - 2"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "//Scenario 1: Aggregate analysis of trend over time\r\nSigninLogs\r\n| extend DeviceId = tostring(DeviceDetail.deviceId)\r\n| where AppId == \"38aa3b87-a06d-4817-b275-7a316988d93b\" //Windows Sign-In\r\n| where ResultType == 0 //\r\n| summarize DistinctUsers=dcount(UserPrincipalName), DistinctDevices=dcount(DeviceId) by bin(TimeGenerated,1h) ",
+        "size": 0,
+        "aggregation": 2,
+        "showAnalytics": true,
+        "title": "Max Successful PRT Users and Devices Per Hour",
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "linechart",
+        "chartSettings": {
+          "showLegend": true
+        }
+      },
+      "customWidth": "50",
+      "showPin": true,
+      "name": "query - 3"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Troubleshooting\r\nUsers who have errors acquiring a PRT might experience additional authentication prompts and will fail any policies with device controls. \r\n\r\n### Breakdown of errors "
+      },
+      "name": "text - 4"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs\r\n| extend DeviceId = tostring(DeviceDetail.deviceId)\r\n| where AppId == \"38aa3b87-a06d-4817-b275-7a316988d93b\" //Windows Sign-In\r\n| where ResultType != 0 //Not success //| where ResultType != 50155 //Not \"device auth error\"\r\n| extend Result = strcat(tostring(ResultType), \"-\", tostring(ResultDescription))\r\n| summarize TotalRequests=count() by Result\r\n\r\n\r\n",
+        "size": 3,
+        "showAnalytics": true,
+        "title": "Total Request with errors ",
+        "timeContext": {
+          "durationMs": 604800000
+        },
+        "timeContextFromParameter": "TimeRange",
+        "exportParameterName": "ErrorCode",
+        "exportDefaultValue": "{ \"Name\":\"\", \"Type\":\"*\"}",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "piechart"
+      },
+      "customWidth": "50",
+      "showPin": true,
+      "name": "query - 5",
+      "styleSettings": {
+        "maxWidth": "50%"
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs\r\n| extend DeviceId = tostring(DeviceDetail.deviceId)\r\n| where AppId == \"38aa3b87-a06d-4817-b275-7a316988d93b\" //Windows Sign-In\r\n| where ResultType != 0 //Not success //| where ResultType != 50155 //Not \"device auth error\"\r\n| extend Result = strcat(tostring(ResultType), \"-\", tostring(ResultDescription))\r\n| summarize TotalRequests=dcount(UserPrincipalName) by Result\r\n\r\n\r\n",
+        "size": 3,
+        "showAnalytics": true,
+        "title": "Distinct Users with errors ",
+        "timeContext": {
+          "durationMs": 604800000
+        },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "piechart"
+      },
+      "customWidth": "50",
+      "showPin": true,
+      "name": "query - 5 - Copy",
+      "styleSettings": {
+        "maxWidth": "50%"
+      }
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs\r\n| extend DeviceId = tostring(DeviceDetail.deviceId)\r\n| where AppId == \"38aa3b87-a06d-4817-b275-7a316988d93b\" //Windows Sign-In\r\n| where ResultType == 50155 //Device authentication failed for this user.\r\n| project TimeGenerated, Id, CorrelationId, UserPrincipalName\r\n| summarize TotalRequests=count() by UserPrincipalName\r\n| sort by TotalRequests desc\r\n",
+        "size": 1,
+        "showAnalytics": true,
+        "title": "Users with device authentication errors",
+        "timeContext": {
+          "durationMs": 604800000
+        },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "gridSettings": {
+          "filter": true
+        }
+      },
+      "customWidth": "50",
+      "showPin": true,
+      "name": "query - 7"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs\r\n| extend DeviceId = tostring(DeviceDetail.deviceId)\r\n| where AppId == \"38aa3b87-a06d-4817-b275-7a316988d93b\" //Windows Sign-In\r\n| where ResultType != 0 //Not success //| where ResultType != 50155 //Not \"device auth error\"\r\n| extend Result = strcat(tostring(ResultType), \"-\", tostring(ResultDescription))\r\n| summarize Count = count(Result) by UserDisplayName, Result\r\n| sort by Count desc\r\n",
+        "size": 1,
+        "showAnalytics": true,
+        "title": "Total Error Count by User",
+        "timeContext": {
+          "durationMs": 604800000
+        },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "filter": true
+        }
+      },
+      "customWidth": "50",
+      "showPin": true,
+      "name": "query - 7 - Copy - Copy"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Device Detail"
+      },
+      "name": "text - 12"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs\r\n| extend DeviceId = tostring(DeviceDetail.deviceId)\r\n| where AppId == \"38aa3b87-a06d-4817-b275-7a316988d93b\" //Windows Sign-In\r\n| where ResultType != 0\r\n| summarize TotalRequests = count() by DeviceId, UserDisplayName\r\n| order by TotalRequests desc",
+        "size": 3,
+        "showAnalytics": true,
+        "title": "Unsuccessful Sign-ins by UserName and Device ID",
+        "timeContext": {
+          "durationMs": 0
+        },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": [
+          "{Workspace}"
+        ],
+        "visualization": "table",
+        "gridSettings": {
+          "filter": true
+        }
+      },
+      "customWidth": "50",
+      "showPin": true,
+      "name": "query - 11 - Copy"
+    }
+  ],
+  "fallbackResourceIds": [
+    "/subscriptions/ab48f397-fc82-4634-aa52-62dd91b3ebaa/resourcegroups/woodgrove-rg/providers/microsoft.operationalinsights/workspaces/woodgrove-loganalyiticsworkspace"
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
